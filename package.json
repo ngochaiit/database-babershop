@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www --exec babel-node"
+    "start": "node ./bin/www --exec babel-node" //nodemon
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -15,10 +15,12 @@
     "http-errors": "~1.6.2",
     "jsonwebtoken": "^8.4.0",
     "mongoose": "^5.3.12",
-    "morgan": "~1.9.0"
-  },
-  "devDependencies": {
+    "morgan": "~1.9.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0"
-  }
+  },
+  // "devDependencies": {
+  //   "babel-cli": "^6.26.0",
+  //   "babel-preset-env": "^1.7.0"
+  // }
 }
