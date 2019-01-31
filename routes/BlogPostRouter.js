@@ -1,6 +1,18 @@
 var express = require('express');
 var router = express.Router();
-const {insertBlogPost, queryBlogPosts,queryBlogPostsByDateRange, getDetailBlogPost, updateBlogPost, deleteBlogPost, deleteBlogPostByAthor} = require('../database/models/BlogPost')
+var multer = require('multer');
+var path = require('path');
+const {insertBlogPost, queryBlogPosts,queryBlogPostsByDateRange, getDetailBlogPost, updateBlogPost, deleteBlogPost, deleteBlogPostByAthor,showAllBlogpost} = require('../database/models/BlogPost')
+
+var storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, '../public/images'))
+    },
+    filename: (req, file, cb) => {
+      cb(null, file.originalname )
+    }
+  });
+var upload = multer({storage: storage});
 
 router.use((req, res, next) =>
 {
@@ -8,38 +20,35 @@ router.use((req, res, next) =>
     next()
 })
 //insert newpost
-router.post('/newpost', async (req, res) =>
-{
-    let {title, content} = req.body;
-    //client phai gui token
-    let tokenKey = req.headers['x-access-token']  ; 
-    
+router.post('/newpost', upload.single('urlImage'),async (req, res, next) => {
     try{
-        if (!tokenKey)
+      let {title,content} = req.body;
+     
+      let url =   req.file.filename;
+        console.log(url);
+
+      let tokenKey = req.headers['x-access-token']  ; 
+      let newPost = await insertBlogPost(title,content,url,tokenKey)
+      
+      res.json(
         {
-            throw "Ban can phai dang nhap truoc"
+            result: 'ok',
+            message: 'Them moi bai viet thanh cong',
+            data: newPost
         }
-        console.log('abc')
-       let newPost = await insertBlogPost(title, content, tokenKey)
-        res.json(
-            {
-                result: 'ok',
-                message: 'Them moi bai viet thanh cong',
-                data: newPost
-            }
-        )
+      )     
     }
-    catch(error)
-    {
-       
-         res.json(
-             {
-                 result: 'failed',
-                 message: `Them moi bai viet that bai. Error = ${error}`
-             }
-         )
+    catch(error) {
+      res.json(
+        {
+            result: 'failed',
+            message: `Them moi bai viet that bai. Error = ${error}`
+        }
+      )
     }
-})
+  
+  
+  });
 
 // Tim BlogPost trong danh sach
 
@@ -66,6 +75,29 @@ router.get('/queryBlogPost', async (req, res) =>
         }
     )
    }
+})
+
+router.get('/showallpost', async (req, res) =>
+{
+    try
+    {
+        let blogposts = await showAllBlogpost();
+        res.json(
+            {
+                result: 'ok',
+                message:'Danh sach BlogPost',
+                data: blogposts
+            }
+        )
+    }
+    catch(error)
+    {
+        res.json(
+        {
+            result: 'failed',
+            message:`Show blogPost that bai. Error = ${error}`
+        })
+    }
 })
 
 
@@ -130,7 +162,7 @@ router.put('/update', async (req, res) =>
     let{id} = req.body;
     let updatedBlogPost = req.body;
     let tokenKey = req.headers['x-access-token']
-    console.log(tokenKey)
+    console.log(id)
     try{
         let blogPost = await updateBlogPost(id, updatedBlogPost, tokenKey)
         res.json({
@@ -156,13 +188,13 @@ router.delete('/delete', async (req,res) =>
 {
     let {id} = req.body;
     let tokenKey = req.headers['x-access-token']
+    console.log(tokenKey, id, '1234')
     try{
-        let deletePost = await deleteBlogPost(id, tokenKey);
+        await deleteBlogPost(id, tokenKey);
         res.json(
             {
                 result: 'ok',
                 message: 'delete Ban ghi thanh cong',
-                data: deletePost
             }
         )
     }
@@ -202,6 +234,25 @@ router.delete('/deleteByAuthor', async (req, res) =>
             {
                 result: 'failed',
                 message: `Delete bai viet cua tac gia that bai. Error = ${error}`
+            }
+        )
+    }
+})
+
+router.get('/sendfile/:image', async (req, res) =>
+{
+    try{
+        let {image} = req.params;
+        console.log(image)
+        let url = '/media/ngochai/Study/project techmaster/HairHeavenDatabases';
+    await res.sendFile(path.join(url +'/public/images/'+ image)); 
+    }
+    catch(error)
+    {
+        res.json(
+            {
+                result: 'failed',
+                message: `Tai anh that bai. Error - ${error}`
             }
         )
     }

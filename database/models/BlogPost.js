@@ -6,6 +6,7 @@ const {verifyJWT} = require('./User')
 const BlogPostSchema = new Schema({
     title: {type: String, default: 'unknown', unique: true},
     content: {type: String, default: ''},
+    urlImage : {type: String, default: ''},
     createdAt: {type: Date, default: Date.now},
     updatedAt: {type: Date, default: Date.now},
     //Trường tham chiếu, 1 blogpost do 1 người viết
@@ -18,19 +19,18 @@ const BlogPost = mongoose.model('BlogPost', BlogPostSchema);
 
 //api insert blogPost
 
-const insertBlogPost = async (title, content, tokenKey) =>
+const insertBlogPost = async (title, content,urlImage, tokenKey) =>
 {
    try{
 
     let signedUser = await verifyJWT(tokenKey);
-    console.log(signedUser)
     if(!signedUser)
     {
         throw "Lam on dang nhap de dang bai viet"
     }
     let newBlogPost = await BlogPost.create(
         {
-            title, content,
+            title, content, urlImage,
             createdAt: Date.now(),
             author: signedUser
         }
@@ -78,6 +78,19 @@ const queryBlogPosts = async (text) =>
     catch(error)
     {
         throw error;
+    }
+}
+// ham tra ve toan bo danh sach blog post:
+const showAllBlogpost = async () =>
+{
+    try{
+        let ListBlogPost = await BlogPost.find();
+        return ListBlogPost
+    }
+    catch(error)
+    {
+        throw error;
+        
     }
 }
 
@@ -144,6 +157,8 @@ const updateBlogPost = async (blogPostId, updatedBlogPost, tokenKey) =>
     }
     editBlogPost.title = !updatedBlogPost.title ? editBlogPost.title : updatedBlogPost.title
     editBlogPost.content = !updatedBlogPost.content ? editBlogPost.content : updatedBlogPost.content
+    editBlogPost.urlImage = !updatedBlogPost.urlImage ? editBlogPost.urlImage : updatedBlogPost.urlImage
+
     editBlogPost.updatedAt = Date.now()
     await editBlogPost.save()
     return editBlogPost
@@ -160,13 +175,17 @@ const deleteBlogPost = async (blogPostId,tokenKey) =>
 {
     try{
         let signedInUser = await verifyJWT(tokenKey);// tra ve 1 users
-        let foundBlogPost = await BlogPost.findById(blogPostId);// tim blogpost
+        console.log(signedInUser,'Thong tin user')
+        if(signedInUser)
+        {
+            let foundBlogPost = await BlogPost.findById(blogPostId);// tim blogpost
 
         if(!foundBlogPost)
         {
             throw ` Khong tim duoc bai viet co ID la: ${blogPostId}`
         }
-        if(signedInUser.id !== foundBlogPost.author.toString() )
+        console.log(signedInUser._id.toString(),' ', foundBlogPost.author.toString())
+        if(signedInUser._id.toString() !== foundBlogPost.author.toString() )
         {
             throw 'Ban Khong co quyen xoa vi khong so huu ban quyen'
         }
@@ -178,7 +197,11 @@ const deleteBlogPost = async (blogPostId,tokenKey) =>
             })
 
         await signedInUser.save()
-        return signedInUser
+        
+        }
+        else{
+            throw 'ban can phai dang nhap';
+        }
     }
     catch(error)
     {
@@ -224,8 +247,6 @@ const deleteBlogPostByAdmin = async (userId) =>
     }
 }
 
-const testFunction = async (text) =>
-{
-    console.log(text)
-}
-module.exports ={BlogPost, insertBlogPost,queryBlogPosts, queryBlogPostsByDateRange,getDetailBlogPost, updateBlogPost,deleteBlogPost, deleteBlogPostByAthor,deleteBlogPostByAdmin, testFunction}
+
+
+module.exports ={BlogPost, insertBlogPost,queryBlogPosts, queryBlogPostsByDateRange,getDetailBlogPost, updateBlogPost,deleteBlogPost, deleteBlogPostByAthor,deleteBlogPostByAdmin, showAllBlogpost}
