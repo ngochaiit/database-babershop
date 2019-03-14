@@ -5,6 +5,7 @@ const {verifyJWT} = require('./User')
 
 const BlogPostSchema = new Schema({
     title: {type: String, default: 'unknown', unique: true},
+    intro: {type: String, default: ''},
     content: {type: String, default: ''},
     urlImage : {type: String, default: ''},
     createdAt: {type: Date, default: Date.now},
@@ -19,7 +20,7 @@ const BlogPost = mongoose.model('BlogPost', BlogPostSchema);
 
 //api insert blogPost
 
-const insertBlogPost = async (title, content,urlImage, tokenKey) =>
+const insertBlogPost = async (title, intro, content,urlImage, tokenKey) =>
 {
    try{
 
@@ -30,7 +31,7 @@ const insertBlogPost = async (title, content,urlImage, tokenKey) =>
     }
     let newBlogPost = await BlogPost.create(
         {
-            title, content, urlImage,
+            title, intro, content, urlImage,
             createdAt: Date.now(),
             author: signedUser
         }

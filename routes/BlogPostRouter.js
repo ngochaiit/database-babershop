@@ -22,13 +22,13 @@ router.use((req, res, next) =>
 //insert newpost
 router.post('/newpost', upload.single('urlImage'),async (req, res, next) => {
     try{
-      let {title,content} = req.body;
+      let {title,intro,content} = req.body;
      
       let url =   req.file.filename;
         console.log(url);
 
       let tokenKey = req.headers['x-access-token']  ; 
-      let newPost = await insertBlogPost(title,content,url,tokenKey)
+      let newPost = await insertBlogPost(title,intro,content,url,tokenKey)
       
       res.json(
         {
